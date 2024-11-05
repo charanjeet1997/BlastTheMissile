@@ -16,6 +16,10 @@ public class SpaceShuttleShoot : MonoBehaviour
     {
         yield return new WaitForSeconds(bulletInstantiateIntervalTime);
         GameObject bullet = Instantiate(bulletPrefab,bulletInstantiatePoint.transform.position,bulletInstantiatePoint.transform.rotation);
+        if (bullet.TryGetComponent(out BulletMovement bulletMovement))
+        {
+            bulletMovement.MoveBullet(bullet.transform.forward);
+        }
         StartCoroutine(BulletInstantiate());
     }
 

@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class SpaceShuttleRotation : MonoBehaviour
 {
-    [SerializeField] Vector3 initPosition;
-    [SerializeField] Vector3 dragPosition;
-    public Camera mainCamera;
-    public float rotationSpeed;
-    Touch[] touches;
+    [SerializeField] private float rotationSpeed = 0.5f;
+    private Vector2 lastMousePosition;
+    private Camera mainCamera;
+
     private void Start()
     {
         mainCamera = Camera.main;
@@ -17,51 +13,72 @@ public class SpaceShuttleRotation : MonoBehaviour
 
     private void Update()
     {
-        PlayerRotation();
+        HandleRotation();
     }
 
-    private void PlayerRotation()
+    private void HandleRotation()
     {
+#if UNITY_ANDROID || UNITY_IOS
         if (Input.touchCount > 0)
         {
-            touches = Input.touches;
-            SetTouch(Array.Find(touches, x => x.position.x > Screen.width / 2.5f));
+            Touch touch = Input.GetTouch(0);
+            if (touch.position.x > Screen.width / 2.5f)
+            {
+                HandleTouchRotation(touch);
+            }
         }
-        // if (Input.mousePosition.x > Screen.width / 2)
-        // {
-        //     if (Input.GetMouseButtonDown(0))
-        //     {
-        //         initPosition = ScreenToWorldPoint(Input.mousePosition);
-        //     }
-        //     if (Input.GetMouseButton(0))
-        //     {
-        //         dragPosition = ScreenToWorldPoint(Input.mousePosition);
-        //         Vector3 initToDragDir = dragPosition - initPosition;
-        //         float angle = Vector3.SignedAngle(initPosition, initToDragDir, Vector3.forward);
-        //         transform.Rotate(0, 0, angle * rotationSpeed);
-        //         initPosition = dragPosition;
-        //     }
-        // }
+#endif
+
+#if UNITY_EDITOR || UNITY_STANDALONE
+        if (Input.GetMouseButtonDown(1))
+        {
+            lastMousePosition = Input.mousePosition;
+        }
+        else if (Input.GetMouseButton(1))
+        {
+            Vector2 currentMousePosition = Input.mousePosition;
+            Vector2 mouseDelta = currentMousePosition - lastMousePosition;
+
+            // Get the direction from object to mouse in screen space
+            Vector2 objectScreenPos = mainCamera.WorldToScreenPoint(transform.position);
+            Vector2 mouseDir = currentMousePosition - objectScreenPos;
+
+            // Determine rotation direction based on cross product
+            float rotationDirection = Vector3.Cross(mouseDir, mouseDelta).z;
+            
+            // Apply rotation based on mouse movement magnitude
+            float rotationAmount = mouseDelta.magnitude * Mathf.Sign(rotationDirection) * rotationSpeed;
+            transform.Rotate(0, 0, rotationAmount);
+
+            lastMousePosition = currentMousePosition;
+        }
+#endif
     }
 
-    private void SetTouch(Touch touch)
+    private void HandleTouchRotation(Touch touch)
     {
-        if (touch.phase == TouchPhase.Began)
+        switch (touch.phase)
         {
-            initPosition = ScreenToWorldPoint(touch.position);
-        }
-        else if (touch.phase == TouchPhase.Moved)
-        {
-            dragPosition = ScreenToWorldPoint(touch.position);
-            Vector3 initToDragDir = dragPosition - initPosition;
-            float angle = Vector3.SignedAngle(initPosition, initToDragDir, Vector3.forward);
-            transform.Rotate(0, 0, angle * rotationSpeed);
-            initPosition = dragPosition;
-        }
-    }
+            case TouchPhase.Began:
+                lastMousePosition = touch.position;
+                break;
 
-    public Vector3 ScreenToWorldPoint(Vector3 screenPosition)
-    {
-        return mainCamera.ScreenToWorldPoint(screenPosition);
+            case TouchPhase.Moved:
+                Vector2 touchDelta = touch.position - lastMousePosition;
+                
+                // Get the direction from object to touch in screen space
+                Vector2 objectScreenPos = mainCamera.WorldToScreenPoint(transform.position);
+                Vector2 touchDir = touch.position - objectScreenPos;
+
+                // Determine rotation direction based on cross product
+                float rotationDirection = Vector3.Cross(touchDir, touchDelta).z;
+                
+                // Apply rotation based on touch movement magnitude
+                float rotationAmount = touchDelta.magnitude * Mathf.Sign(rotationDirection) * rotationSpeed;
+                transform.Rotate(0, 0, rotationAmount);
+
+                lastMousePosition = touch.position;
+                break;
+        }
     }
-}
+}   

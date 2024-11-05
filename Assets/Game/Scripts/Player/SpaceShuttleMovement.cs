@@ -14,11 +14,16 @@ public class SpaceShuttleMovement : MonoBehaviour
 
     private void PlayerMovement()
     {
-        if(Mathf.Abs(movementJoystick.Horizontal) > 0.2f || Mathf.Abs(movementJoystick.Vertical) > 0.2f)
-        {
-            movementVector = new Vector2(movementSpeed * movementJoystick.Horizontal,movementSpeed * movementJoystick.Vertical);
-            transform.Translate(movementVector * Time.deltaTime,Space.World);
-        }
+        // if(Mathf.Abs(movementJoystick.Horizontal) > 0.2f || Mathf.Abs(movementJoystick.Vertical) > 0.2f)
+        // {
+        //     movementVector = new Vector2(movementSpeed * movementJoystick.Horizontal,movementSpeed * movementJoystick.Vertical);
+        //     transform.Translate(movementVector * Time.deltaTime,Space.World);
+        // }
+        
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        movementVector = new Vector2(movementSpeed * horizontal,movementSpeed * vertical);
+        transform.Translate(movementVector * Time.deltaTime,Space.World);
     }
 
     
